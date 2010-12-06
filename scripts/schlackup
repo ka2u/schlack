@@ -1,0 +1,4 @@
+#!/opt/gauche/bin/gosh
+
+(use schlack.runner)
+
