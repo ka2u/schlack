@@ -3,4 +3,4 @@
 (add-load-path "/home/kaz/dev/schlack/lib")
 (use http.server.ssgi)
 
-(run (lambda (env) "app process"))
+(run (lambda (env) "app process") ())

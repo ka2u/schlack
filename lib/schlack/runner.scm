@@ -1,9 +1,9 @@
 
 
-(define-module splach.runner
+(define-module schlack.runner
   (export run
           load_server))
-(select-module splach.runner)
+(select-module schlack.runner)
 
 (define (run )
 )

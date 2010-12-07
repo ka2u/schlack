@@ -9,37 +9,41 @@
 (define *max-request-size* 131072)
 (define *timeout* 300)
 
-(define (run app . env)
-  (let ([env (get-optional env #f)])
-    (if (eq? env #f)
-        (let ([env (hash-table 'equal?
-                               '("SERVER_PORT"       . 8088)
-                               '("SERVER_NAME"       . "localhost")
-                               '("SCRIPT_NAME"       . "")
-                               '("REMOTE_ADDR"       . "")
-                               '("ssgi.version"      . "0.0001")
-                               '("ssgi.errors"       . "")
-                               '("ssgi.url_scheme"   . "http")
-                               '("ssgi.run_once"     . #f)
-                               '("ssgi.multithread"  . #f)
-                               '("ssgi.multiprocess" . #f)
-                               '("ssgi.streaming"    . #t)
-                               '("ssgi.nonblocking"  . #f)
-                               '("ssgix.input.input.buffered" . #t)
-                               '("ssgix.io" . ""))])
-          (accept-loop app env))
-        (accept-loop app env))))
+(define (run app . args)
+  (let-optionals* args ((host 0)
+                        (port 8088)
+                        (timeout 300)
+                        (server_software "http.server.ssgi")
+                        (server_ready (lambda ()))
+                        (max_reqs_per_child 100))
+    (accept-loop app (list host port timeout server_software server_ready max_reqs_per_child))))
 
-(define (accept-loop app env)
+(define (accept-loop app args)
   (let ([sock (make-server-socket 
-               'inet (hash-table-get env "SERVER_PORT") :reuse-addr? #t)]
+               'inet (cadr args) :reuse-addr? #t)]
         [sigpipe (sys-sigset SIGPIPE)]
         [proc_req_count 0]
         [max_reqs_per_child 0])
     (set-signal-handler! sigpipe #f)
     (while (or (equal? max_reqs_per_child 0)
                (< proc_req_count max_reqs_per_child))
-      (let* ([accepted (socket-accept sock)])
+      (let* ([accepted (socket-accept sock)]
+             [env (hash-table 'equal?
+                              '("SERVER_PORT"       . (cadr args))
+                              '("SERVER_NAME"       . (car args))
+                              '("SCRIPT_NAME"       . "")
+                              '("REMOTE_ADDR"       . 
+                                (sockaddr-name (socket-getpeername accepted)))
+                              '("ssgi.version"      . '(1 . 1))
+                              '("ssgi.errors"       . (current-error-port))
+                              '("ssgi.url_scheme"   . "http")
+                              '("ssgi.run_once"     . #f)
+                              '("ssgi.multithread"  . #f)
+                              '("ssgi.multiprocess" . #f)
+                              '("ssgi.streaming"    . #t)
+                              '("ssgi.nonblocking"  . #f)
+                              '("ssgix.input.input.buffered" . #t)
+                              '("ssgix.io" . accepted))])
         (socket-setsockopt accepted SOL_TCP TCP_NODELAY 1)
         (+ proc_req_count 1)
         (handle-response accepted 
@@ -75,8 +79,11 @@
         env
         (let ([k (rxmatch token (string-incomplete->complete (car lines)))]
               [header (regexp-replace header-token  (string-incomplete->complete (car lines)) "")])
-        (hash-table-put! env (k) header)
-        (import-headers (cdr lines) env)))))
+          (if (hash-table-exists? env (k))
+              (hash-table-put! env (k) 
+                                (string-append (hash-table-get env (k)) ", " header))
+              (hash-table-put! env (k) header))
+              (import-headers (cdr lines) env)))))
 
 (define (run-app app env)
   (app env))
