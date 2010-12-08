@@ -42,7 +42,7 @@
                               '("ssgi.multiprocess" . #f)
                               '("ssgi.streaming"    . #t)
                               '("ssgi.nonblocking"  . #f)
-                              '("ssgix.input.input.buffered" . #t)
+                              '("ssgix.input.buffered" . #t)
                               '("ssgix.io" . accepted))])
         (socket-setsockopt accepted SOL_TCP TCP_NODELAY 1)
         (+ proc_req_count 1)
