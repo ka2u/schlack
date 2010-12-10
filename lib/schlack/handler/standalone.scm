@@ -3,12 +3,12 @@
   (use srfi-13)
   (use rfc.uri)
   (use rfc.822)
-  (export server-run
-          parse-header
-          run-app))
+  (use schlack.handler)
+  (export <standalone> server-run))
 (select-module schlack.handler.standalone)
 
-(debug-print-width #f)
+(define-class <standalone> (<handler>) ())
+
 (define env (hash-table 'equal?
   '(SERVER_PORT . 8080)
   '(SERVER_NAME . 0)
@@ -78,7 +78,7 @@
 (define (env-get key)
   (hash-table-get env key))
 
-(define (server-run app)
+(define-method server-run ((handler <standalone>) app)
   (let ([sock (make-server-socket 'inet 8088 :reuse-addr? #t)])
     (while #t
       (let ([accepted (socket-accept sock)])

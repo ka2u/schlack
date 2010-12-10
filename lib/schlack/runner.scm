@@ -1,25 +1,22 @@
 (define-module schlack.runner
   (use gauche.parseopt)
+  (use schlack.handler.standalone)
   (export run))
 (select-module schlack.runner)
 
 (define (run args)
   (let* ([options (parse-args args)]
-         [server (hash-table-get options "server")]
-        [app (load-ssgi (hash-table-get options "app"))])
-    ;(if (module? (find-module server))
-        ;(begin (requier server)
-        ;       (import server)
-        ;       (server-run app))
-        (begin (use schlack.handler.standalone)
-        (server-run app))))
+         [handler (hash-table-get options "server")]
+        [app (load-ssgi (hash-table-get options "app"))]
+        [server (make handler)])
+        (server-run server app)))
 
 (define (parse-args args)
   (let-args (cdr args)
       ((app    "a|app=s")
        (host   "o|host=s")
        (port   "p|port=i")
-       (server "s|server=s")
+       (server "s|server=s" <standalone>)
        (socket "S|socket=s")
        (listen "l|listen=s")
        (daemonize "D|daemonize")
