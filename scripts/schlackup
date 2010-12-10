@@ -1,4 +1,9 @@
 #!/opt/gauche/bin/gosh
 
+(debug-print-width #f)
+(add-load-path "/home/kaz/dev/schlack/lib")
 (use schlack.runner)
+
+(define (main args)
+  (run args))
 

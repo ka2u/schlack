@@ -1,0 +1,5 @@
+(lambda (env) 
+  (let ([body "It works."])
+  `(200 
+    ((Content-Type text/html) (Content-Length ,(string-length body)))
+    ,body)))

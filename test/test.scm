@@ -1,6 +1,6 @@
 #!/opt/gauche/bin/gosh
 
 (add-load-path "/home/kaz/dev/schlack/lib")
-(use http.server.ssgi)
+(use schlack.handler.standalone)
 
-(run (lambda (env) "app process") ())
+(server-run (lambda () "app process"))

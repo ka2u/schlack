@@ -1,29 +1,29 @@
-(define-module http.server.ssgi2
+(define-module schlack.handler.standalone
   (use gauche.net)
   (use srfi-13)
   (use rfc.uri)
   (use rfc.822)
-  (export run
+  (export server-run
           parse-header
           run-app))
-(select-module http.server.ssgi2)
+(select-module schlack.handler.standalone)
 
 (debug-print-width #f)
 (define env (hash-table 'equal?
-  '("SERVER_PORT" . 8080)
-  '("SERVER_NAME" . 0)
-  '("SCRIPT_NAME" . "")
-  '("REMOTE_ADDR" . "")
-  '("ssgi.version"        . '(1 . 1))
-  '("ssgi.errors"         . (current-error-port))
-  '("ssgi.url_scheme"     . "http")
-  '("ssgi.run_once"       . #f)
-  '("ssgi.multithread"    . #f)
-  '("ssgi.multiprocess"   . #f)
-  '("ssgi.streaming"      . #t)
-  '("ssgi.nonblocking"    . #f)
-  '("ssgi.input.buffered" . #t)
-  '("ssgi.io"             . "")
+  '(SERVER_PORT . 8080)
+  '(SERVER_NAME . 0)
+  '(SCRIPT_NAME . "")
+  '(REMOTE_ADDR . "")
+  '(ssgi.version        . '(1 . 1))
+  '(ssgi.errors         . (current-error-port))
+  '(ssgi.url_scheme     . "http")
+  '(ssgi.run_once       . #f)
+  '(ssgi.multithread    . #f)
+  '(ssgi.multiprocess   . #f)
+  '(ssgi.streaming      . #t)
+  '(ssgi.nonblocking    . #f)
+  '(ssgi.input.buffered . #t)
+  '(ssgi.io             . "")
   ))
 
 (define *status-code-map*
@@ -78,7 +78,7 @@
 (define (env-get key)
   (hash-table-get env key))
 
-(define (run app)
+(define (server-run app)
   (let ([sock (make-server-socket 'inet 8088 :reuse-addr? #t)])
     (while #t
       (let ([accepted (socket-accept sock)])
@@ -113,12 +113,7 @@
 
 (define (run-app app sock)
   (guard (e [else (rerspond/ng sock 500)])
-    (app)
-    (let ([body "<h1>It works.</h1>"])
-      `(200 
-        (("Content-Type" "text/html")
-         ("Content-Length" ,(string-length body)))
-         ,body))))
+    (eval `(,app ,env) (interaction-environment))))
 
 (define (respond sock response)
   (guard (e [else (rerspond/ng sock 500)])
@@ -132,7 +127,7 @@
       (p code) (p (hash-table-get *status-code-map* code)) (crlf)
       (respond-header header (lambda (x) (p x)) (lambda () (crlf)))
       (p "Date: ") (p (sys-asctime (sys-gmtime (sys-time)))) ; added \r\n
-      (p "Server: http.server.ssgi2")(crlf)(crlf)
+      (p "Server: schlack.handler.standalone")(crlf)(crlf)
       (p body)
       (flush port))))
 
