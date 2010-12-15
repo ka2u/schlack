@@ -87,7 +87,7 @@
         (socket-close accepted)))))
 
 (define (parse-header sock)
-  (guard (e [else (rerspond/ng sock 500)])
+  (guard (e [else (respond/ng sock 500)])
     (let* ([line (read-line (socket-input-port sock))])
       (rxmatch-case line
         [test eof-object? (lambda ())]
@@ -112,11 +112,11 @@
 
 
 (define (run-app app sock)
-  (guard (e [else (rerspond/ng sock 500)])
+  (guard (e [else (respond/ng sock 500)])
     (eval `(,app ,env) (interaction-environment))))
 
 (define (respond sock response)
-  (guard (e [else (rerspond/ng sock 500)])
+  (guard (e [else (respond/ng sock 500)])
     (let ([port (socket-output-port sock)]
           [code (car response)]
           [header (cadr response)]
