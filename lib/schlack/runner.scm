@@ -8,7 +8,7 @@
   (let* ([options (parse-args args)]
          [handler (hash-table-get options "server")]
         [app (load-ssgi (hash-table-get options "app"))]
-        [server (make handler)])
+        [server (make (guess handler))])
         (server-run server app)))
 
 (define (parse-args args)
@@ -16,7 +16,7 @@
       ((app    "a|app=s")
        (host   "o|host=s")
        (port   "p|port=i")
-       (server "s|server=s" <standalone>)
+       (server "s|server=s" "standalone")
        (socket "S|socket=s")
        (listen "l|listen=s")
        (daemonize "D|daemonize")
@@ -44,3 +44,6 @@
     (read inport)))
 
     
+(define (guess server)
+  (cond 
+   (else <standalone>)))
